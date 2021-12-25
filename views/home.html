@@ -1,0 +1,305 @@
+<body>
+    <div class="center">
+        <h2>Welcome to 'KnowledgeProof'</h2>
+        <h3>On this site you can proof you knew information without disclosing the actual information.</h3>
+        <h3>This is possible by hashing (making a signature of) the text and providing the input to the hash later.</h3>
+        <h3>Hashing (SHA256) is a one way cryptographic algorithm. You can go from input to hash, but not from hash to
+            input, unless an attacker starts bruteforcing all possibilties.</h3>
+        <h3 style="color: #b00000;">Only characters a-z A-Z 0-9 and spaces are allowed (use the clean button)</h3>
+
+        <a href="url">https://emn178.github.io/online-tools/sha256.html</a>
+
+        <br /><br /><br />
+        <div id="submitbox">
+            <div>
+                <button style="margin-top: 10px;" onclick="showSubmitHashField()" class="button">Submit a hash</button>
+                <button style="margin-top: 10px;" onclick="showVerifyHashField()" class="button">Verify a hash</button>
+            </div>
+            <div id="submit-hash" style="margin-top: 20px;">
+                <h3>Submit a new SHA256 hash (hash input is capped at 5000 characters)</h3>
+                <textarea id="new-hash-textarea" style="margin-bottom: 10px;" rows="4" cols="50"></textarea><br>
+                <button onclick="submitNewHash()" style="margin-bottom: 10px;">Send!</button>
+            </div>
+            <div id="verify-solution" style="margin-top: 20px;">
+                <h3>Verify a SHA256 hash by submitting the input (max 5000 characters)</h3>
+                <textarea id="new-solution-textarea" style="margin-bottom: 10px;" rows="4" cols="50"></textarea><br>
+                <button onclick="cleanNewSolution()" style="margin-bottom: 10px;">Clean!</button>
+                <button onclick="submitNewSolution()" style="margin-bottom: 10px;">Send!</button>
+            </div>
+            <p id="feedback">Status: ...</p>
+
+        </div><br />
+        <div id="box">
+            <h2>Latest hash submissions</h2>
+            <table class="table" id="table-latest-submitted">
+                <tr>
+                    <th>Id</th>
+                    <th>Hash</th>
+                    <th>Input</th>
+                    <th>Submit date</th>
+                    <th>Verify date</th>
+                </tr>
+            </table>
+        </div>
+        <div id="box">
+            <h2>Latest hash solutions</h2>
+            <table class="table" id="table-latest-verified">
+                <tr>
+                    <th>Id</th>
+                    <th>Hash</th>
+                    <th>Input</th>
+                    <th>Submit date</th>
+                    <th>Verify date</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+<style>
+    body {
+        background: rgb(101, 101, 101);
+        background: linear-gradient(90deg, rgba(101, 101, 101, 1) 0%, rgba(198, 193, 193, 1) 100%, rgba(116, 116, 116, 1) 100%, rgba(0, 212, 255, 1) 100%);
+    }
+
+    .center {
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #submitbox {
+        margin: auto;
+        width: 50%;
+        border-color: black;
+        border-style: solid;
+        background-color: #939393;
+    }
+
+    #box {
+        margin: auto;
+    }
+
+    .button {
+        background-color: #5B625C;
+        border: none;
+        color: white;
+        padding: 20px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin-left: 10px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
+    .button:hover {
+
+        box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+    }
+
+    .table {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        /* max-width: 100%; */
+        table-layout: fixed;
+        overflow-wrap: break-word;
+    }
+
+    .table tr>*:nth-child(1) {
+        width: 3%;
+    }
+
+    .table tr>*:nth-child(2) {
+        width: 11%;
+    }
+
+    .table tr>*:nth-child(3) {
+        width: 40%;
+    }
+
+    .table tr>*:nth-child(4) {
+        width: 8%;
+    }
+
+    .table tr>*:nth-child(5) {
+        width: 8%;
+    }
+
+    .table td,
+    .table th {
+        border: 1px solid #ddd;
+    }
+
+    .table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .table tr:hover {
+        background-color: #ddd;
+    }
+
+    .table th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: center;
+        background-color: #404040;
+        color: white;
+    }
+</style>
+<script>
+    function showSubmitHashField() {
+        document.getElementById("verify-solution").style.display = 'none';
+        document.getElementById("submit-hash").style.display = 'block';
+    }
+
+    function submitNewHash() {
+        var inputHash = document.getElementById("new-hash-textarea").value;
+
+        // Check if the input is a valid SHA256 hash
+        const SHA256Regex = new RegExp("^[A-Fa-f0-9]{64}$");
+        if (SHA256Regex.test(inputHash) == false) {
+            feedback.innerHTML = `Not a valid SHA256 hash!`;
+            feedback.style.color = "#b50000";
+            return;
+        }
+
+        var formBody = [];
+        var encodedKey = encodeURIComponent("hash");
+        var encodedValue = encodeURIComponent(inputHash);
+        formBody.push(encodedKey + "=" + encodedValue);
+        formBody = formBody.join("&");
+
+        var http = new XMLHttpRequest();
+        var url = './api/submit';
+        http.open('POST', url, true);
+
+        //Send the proper header information along with the request
+        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+        http.onload = function () {
+            console.log(http.status)
+            var response = JSON.parse(http.response);
+            if (http.status == 200) {
+                feedback.innerHTML = response["message"];
+                feedback.style.color = "#1c4f1c";
+            }
+            else {
+                feedback.innerHTML = response["message"];
+                feedback.style.color = "#b50000";
+            }
+        };
+        http.send(formBody);
+    }
+
+    function cleanNewSolution() {
+        var inputText = document.getElementById("new-solution-textarea").value;
+        var cleanInputText = inputText.replace(/[^a-zA-Z0-9 ]/g, "");
+        document.getElementById("new-solution-textarea").value = cleanInputText;
+        var feedback = document.getElementById("feedback");
+        feedback.innerHTML = `Cleaned!`
+        feedback.style.color = "#1c4f1c";
+        // Input text too long
+        if (inputText.length > 5000) {
+            feedback.innerHTML = `Text too long, ${inputText.length} instead of max 5000 characters!`
+            feedback.style.color = "#b50000";
+        }
+    }
+
+    function submitNewSolution() {
+        var feedback = document.getElementById("feedback");
+        var inputText = document.getElementById("new-solution-textarea").value;
+        var cleanInputText = inputText.replace(/[^a-zA-Z0-9 ]/g, "");
+        // Input text too long
+        if (inputText.length > 5000) {
+            feedback.innerHTML = `Text too long, ${inputText.length} instead of max 5000 characters!`;
+            feedback.style.color = "#b50000";
+        }
+        var formBody = [];
+        var encodedKey = encodeURIComponent("text");
+        var encodedValue = encodeURIComponent(document.getElementById("new-solution-textarea").value);
+        formBody.push(encodedKey + "=" + encodedValue);
+        formBody = formBody.join("&");
+
+        var http = new XMLHttpRequest();
+        var url = './api/verify';
+        http.open('POST', url, true);
+
+        //Send the proper header information along with the request
+        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+        http.onload = function () {
+            console.log(http.status)
+            var response = JSON.parse(http.response);
+            if (http.status == 200) {
+                feedback.innerHTML = response["message"];
+                feedback.style.color = "#1c4f1c";
+            }
+            else {
+                feedback.innerHTML = response["message"];
+                feedback.style.color = "#b50000";
+            }
+        };
+        http.send(formBody);
+
+    }
+
+    function showVerifyHashField() {
+        document.getElementById("submit-hash").style.display = 'none';
+        document.getElementById("verify-solution").style.display = 'block';
+    }
+
+    function getHomepageHashes() {
+
+        var xmlhttp = new XMLHttpRequest(),
+            method = 'GET',
+            url = './api/homepage-hashes';
+
+        xmlhttp.open(method, url, true);
+        xmlhttp.onload = function () {
+            // console.log(JSON.parse(xmlhttp.response));
+            var homepage_hashes = JSON.parse(xmlhttp.response);
+            console.log(homepage_hashes);
+            console.log(homepage_hashes["latest_submitted"][0]);
+            console.log(homepage_hashes["latest_submitted"].length);
+            forloop(homepage_hashes)
+        };
+        xmlhttp.send();
+
+        var table_latest_submitted = document.getElementById("table-latest-submitted");
+        var table_latest_verified = document.getElementById("table-latest-verified");
+        function forloop(homepage_hashes) {
+            for (var i = 0; i < homepage_hashes["latest_submitted"].length; i++) {
+                if (homepage_hashes["latest_submitted"][i]["raw_input"] != null) {
+                    table_latest_submitted.innerHTML +=
+                        `<tr><td>${homepage_hashes["latest_submitted"][i]["id"]}</td>
+                    <td>${homepage_hashes["latest_submitted"][i]["hash"]}</td>
+                    <td>${homepage_hashes["latest_submitted"][i]["raw_input"].substring(0, 2000)}</td>
+                    <td>${homepage_hashes["latest_submitted"][i]["date_submitted"]}</td>
+                    <td>${homepage_hashes["latest_submitted"][i]["date_verified"]}</td></tr>`
+                } else {
+                    table_latest_submitted.innerHTML +=
+                        `<tr><td>${homepage_hashes["latest_submitted"][i]["id"]}</td>
+                    <td>${homepage_hashes["latest_submitted"][i]["hash"]}</td>
+                    <td>Not verified</td>
+                    <td>${homepage_hashes["latest_submitted"][i]["date_submitted"]}</td>
+                    <td>Not verified</td></tr>`
+                }
+            }
+
+            for (var i = 0; i < homepage_hashes["latest_verified"].length; i++) {
+                table_latest_verified.innerHTML +=
+                    `<tr><td>${homepage_hashes["latest_verified"][i]["id"]}</td>
+                    <td>${homepage_hashes["latest_verified"][i]["hash"]}</td>
+                    <td>${homepage_hashes["latest_verified"][i]["raw_input"].substring(0, 2000)}</td>
+                    <td>${homepage_hashes["latest_verified"][i]["date_submitted"]}</td>
+                    <td>${homepage_hashes["latest_verified"][i]["date_verified"]}</td></tr>`
+
+            }
+        }
+    }
+
+    showSubmitHashField();
+    getHomepageHashes();
+
+</script>

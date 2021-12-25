@@ -1,0 +1,44 @@
+version: "3"
+services:
+    node-app:
+        build: .
+        ports:
+            - 3000-3001:3000
+        volumes:
+            - ./:/app
+            - /app/node_modules
+        environment:
+            - PORT=3000
+        deploy:
+            replicas: 2
+        restart: always
+        depends_on:
+            - mysql
+
+    nginx:
+        image: nginx:latest
+        volumes:
+            - ./templates:/etc/nginx/templates
+        container_name: nginx
+        ports:
+            - 80:80
+        restart: always
+
+    mysql:
+        image: mysql:latest
+        command: --default-authentication-plugin=mysql_native_password
+        container_name: mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ccrnjuhnuyrkceghisncuyrsgheknc
+        restart: always
+        volumes: 
+            - ./init:/docker-entrypoint-initdb.d
+
+    phpmyadmin:
+        image: phpmyadmin:latest
+        container_name: phpmyadmin
+        ports:
+            - 8080:80
+        environment:
+            - PMA_ARBITRARY=1
+        restart: always
